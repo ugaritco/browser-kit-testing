@@ -1,0 +1,90 @@
+<?php
+
+namespace Ugarit\BrowserKitTesting\Constraints;
+
+use Symfony\Component\DomCrawler\Crawler;
+
+class HasElement extends PageConstraint
+{
+    /**
+     * The name or ID of the element.
+     */
+    protected readonly string $selector;
+
+    /**
+     * The attributes the element should have.
+     */
+    protected readonly array $attributes;
+
+    /**
+     * Create a new constraint instance.
+     *
+     * @param  string  $selector
+     * @return void
+     */
+    public function __construct($selector, array $attributes = [])
+    {
+        $this->selector = $selector;
+        $this->attributes = $attributes;
+    }
+
+    /**
+     * Check if the element is found in the given crawler.
+     *
+     * @param  Crawler|string  $crawler
+     */
+    public function matches($crawler): bool
+    {
+        $elements = $this->crawler($crawler)->filter($this->selector);
+
+        if ($elements->count() == 0) {
+            return false;
+        }
+
+        if (empty($this->attributes)) {
+            return true;
+        }
+
+        $elements = $elements->reduce(function ($element) {
+            return $this->hasAttributes($element);
+        });
+
+        return $elements->count() > 0;
+    }
+
+    /**
+     * Determines if the given element has the attributes.
+     *
+     * @return bool
+     */
+    protected function hasAttributes(Crawler $element)
+    {
+        foreach ($this->attributes as $name => $value) {
+            if (is_numeric($name)) {
+                if (is_null($element->attr($value))) {
+                    return false;
+                }
+            } else {
+                if ($element->attr($name) != $value) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Returns a string representation of the object.
+     */
+    public function toString(): string
+    {
+        $message = "the element [{$this->selector}]";
+
+        if (! empty($this->attributes)) {
+            $message .= ' with the attributes '.json_encode($this->attributes);
+        }
+
+        return $message;
+    }
+}

@@ -1,0 +1,142 @@
+<?php
+
+namespace Ugarit\BrowserKitTesting\Tests\Unit;
+
+use Exception;
+use Heritage\Contracts\Debug\ExceptionHandler;
+use Heritage\Foundation\Application;
+use Ugarit\BrowserKitTesting\Concerns\InteractsWithExceptionHandling;
+use Ugarit\BrowserKitTesting\Tests\Stubs\ExceptionHandlerStub;
+use Ugarit\BrowserKitTesting\Tests\Stubs\OutputStub;
+use Ugarit\BrowserKitTesting\Tests\TestCase;
+use PHPUnit\Framework\Attributes\RequiresPhpunit;
+use PHPUnit\Framework\Attributes\Test;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+
+class InteractsWithExceptionHandlingTest extends TestCase
+{
+    use InteractsWithExceptionHandling;
+
+    protected $app;
+
+    #[Test]
+    public function with_exception_handling_restore_exception_handling()
+    {
+        $this->app = new Application;
+        $this->previousExceptionHandler = 'MyExceptionHandler';
+        $this->withExceptionHandling();
+        $this->assertEquals(
+            app(ExceptionHandler::class),
+            $this->previousExceptionHandler
+        );
+    }
+
+    #[Test]
+    public function without_exception_handling_disable_exception_handling_for_the_test()
+    {
+        $this->app = new Application;
+        $this->app->instance(ExceptionHandler::class, new ExceptionHandlerStub);
+        $this->assertNull($this->previousExceptionHandler);
+        $this->withoutExceptionHandling();
+        $this->assertInstanceOf(
+            ExceptionHandler::class,
+            $this->previousExceptionHandler
+        );
+    }
+
+    #[Test]
+    #[RequiresPhpunit('<12.3.5')]
+    public function with_exception_handling_throw_exception_not_found_http_exception()
+    {
+        $this->expectException(NotFoundHttpException::class);
+        $this->expectExceptionMessage('Abort 404');
+        $this->app = new Application;
+        $this->app->instance(ExceptionHandler::class, new class {});
+
+        $this->withoutExceptionHandling();
+        abort(404, 'Abort 404');
+    }
+
+    #[Test]
+    public function report_of_instance_exception_handler_on_application_does_nothing()
+    {
+        $this->app = new Application;
+        $this->app->instance(ExceptionHandler::class, new class {});
+
+        $this->withoutExceptionHandling();
+        $this->assertNull(app(ExceptionHandler::class)->report(new Exception));
+    }
+
+    #[Test]
+    public function render_of_instance_exception_handler_on_application_throw_exception_not_found_http_exception()
+    {
+        $this->expectException(NotFoundHttpException::class);
+        $this->expectExceptionMessage('GET http://localhost');
+
+        $this->app = new Application;
+        $this->app->instance(ExceptionHandler::class, new class {});
+
+        $request = new class
+        {
+            public function method()
+            {
+                return 'GET';
+            }
+
+            public function url()
+            {
+                return 'http://localhost';
+            }
+
+            public function getCode()
+            {
+                return 404;
+            }
+        };
+
+        $this->withoutExceptionHandling();
+        app(ExceptionHandler::class)->render($request, new NotFoundHttpException);
+    }
+
+    #[Test]
+    public function render_of_instance_exception_handler_on_application_throw_exception_anyone()
+    {
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('My Exception');
+
+        $this->app = new Application;
+        $this->app->instance(ExceptionHandler::class, new class {});
+
+        $request = new class {};
+
+        $this->withoutExceptionHandling();
+
+        app(ExceptionHandler::class)->render($request, new Exception('My Exception'));
+    }
+
+    #[Test]
+    #[RequiresPhpunit('<12.3.5')]
+    public function render_for_console_throw_exception_to_console_and_does_nothing()
+    {
+        $this->app = new Application;
+        $this->app->instance(ExceptionHandler::class, new class {});
+        $output = new OutputStub;
+        $this->withoutExceptionHandling();
+
+        $this->assertNull(
+            app(ExceptionHandler::class)
+                ->renderForConsole($output, new Exception)
+        );
+    }
+
+    #[Test]
+    public function without_exception_handling_doesnt_not_report_exceptions()
+    {
+        $this->app = new Application;
+        $this->app->instance(ExceptionHandler::class, new class {});
+        $this->withoutExceptionHandling();
+        $this->assertFalse(
+            app(ExceptionHandler::class)->shouldReport(new NotFoundHttpException)
+        );
+    }
+}

@@ -1,0 +1,71 @@
+<?php
+
+namespace Ugarit\BrowserKitTesting\Tests\Unit;
+
+use Heritage\Contracts\Auth\Authenticatable;
+use Ugarit\BrowserKitTesting\Concerns\ImpersonatesUsers;
+use Ugarit\BrowserKitTesting\Tests\TestCase;
+use PHPUnit\Framework\Attributes\Test;
+
+class ImpersonatesUsersTest extends TestCase
+{
+    use ImpersonatesUsers;
+
+    protected $app;
+
+    #[Test]
+    public function set_currently_logged_in_user_for_app()
+    {
+        $user = new class implements Authenticatable
+        {
+            public function getAuthIdentifierName()
+            {
+            }
+
+            public function getAuthIdentifier()
+            {
+            }
+
+            public function getAuthPassword()
+            {
+            }
+
+            public function getAuthPasswordName()
+            {
+            }
+
+            public function getRememberToken()
+            {
+            }
+
+            public function setRememberToken($value)
+            {
+            }
+
+            public function getRememberTokenName()
+            {
+            }
+        };
+
+        $this->app['auth'] = new class
+        {
+            public $user;
+
+            public function guard()
+            {
+                return $this;
+            }
+
+            public function setUser($user)
+            {
+                return $this->user = $user;
+            }
+        };
+
+        $this->be($user);
+        $this->assertInstanceOf(get_class($user), $this->app['auth']->user);
+
+        $this->actingAs($user);
+        $this->assertInstanceOf(get_class($user), $this->app['auth']->user);
+    }
+}

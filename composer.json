@@ -1,0 +1,63 @@
+{
+    "name": "ugarit/browser-kit-testing",
+    "description": "Provides backwards compatibility for BrowserKit testing in the latest Ugarit release.",
+    "keywords": [
+        "ugarit",
+        "testing"
+    ],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Muath R Abu Ouda",
+            "email": "muathrabuouda@hotmail.com",
+            "role": "Vision Leader of Ugarit"
+        },
+        {
+            "name": "Taylor Otwell",
+            "email": "taylor@laravel.com",
+            "role": "Original Creator & Primary Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "ext-dom": "*",
+        "ugarit/framework": "^1.00.00",
+        "mockery/mockery": "^1.0",
+        "phpunit/phpunit": "^10.4|^11.0.1|^12.0.1|^13.0",
+        "symfony/console": "^6.2|^7.0|^8.0",
+        "symfony/css-selector": "^6.2|^7.0|^8.0",
+        "symfony/dom-crawler": "^6.2|^7.0|^8.0",
+        "symfony/http-foundation": "^6.2|^7.0|^8.0",
+        "symfony/http-kernel": "^6.2|^7.0|^8.0"
+    },
+    "require-dev": {
+        "ugarit/pint": "^1.00.00",
+        "orchestra/testbench-core": "^8.39|^9.17|^10.8|^11.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Ugarit\\BrowserKitTesting\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Ugarit\\BrowserKitTesting\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "7.x-dev"
+        }
+    },
+    "config": {
+        "audit": {
+            "block-insecure": false
+        },
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "version": "1.00.00"
+}

@@ -1,0 +1,6 @@
+{
+    "preset": "ugarit",
+    "rules": {
+        "no_superfluous_phpdoc_tags": false
+    }
+}

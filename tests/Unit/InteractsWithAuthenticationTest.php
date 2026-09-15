@@ -1,0 +1,205 @@
+<?php
+
+namespace Ugarit\BrowserKitTesting\Tests\Unit;
+
+use Ugarit\BrowserKitTesting\Concerns\InteractsWithAuthentication;
+use Ugarit\BrowserKitTesting\Tests\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
+
+class InteractsWithAuthenticationTest extends TestCase
+{
+    use InteractsWithAuthentication;
+
+    protected $app;
+
+    protected function createUserProviderToCredentials()
+    {
+        return new class
+        {
+            public $retrieveByCredentials;
+
+            public $validateCredentials;
+
+            public function make()
+            {
+                return $this;
+            }
+
+            public function guard()
+            {
+                return $this;
+            }
+
+            public function getProvider()
+            {
+                return $this;
+            }
+
+            public function retrieveByCredentials()
+            {
+                return $this->retrieveByCredentials;
+            }
+
+            public function validateCredentials()
+            {
+                return $this->validateCredentials;
+            }
+        };
+    }
+
+    #[Test]
+    public function has_credentials_return_true_if_the_credentials_are_valid()
+    {
+        $this->app = $this->createUserProviderToCredentials();
+        $this->app->retrieveByCredentials = true;
+        $this->app->validateCredentials = true;
+
+        $credentials = [
+            'email' => 'john.doe@testing.com',
+            'password' => 'secret',
+        ];
+        $this->assertTrue($this->hasCredentials($credentials));
+    }
+
+    #[Test]
+    #[DataProvider('dataHasCredentials')]
+    public function has_credentials_return_false_if_the_credentials_arent_valid($validateCredentials, $retrieveByCredentials)
+    {
+        $this->app = $this->createUserProviderToCredentials();
+        $this->app->retrieveByCredentials = $retrieveByCredentials;
+        $this->app->validateCredentials = $validateCredentials;
+
+        $credentials = [
+            'email' => 'john.doe@testing.com',
+            'password' => 'secret',
+        ];
+        $this->assertFalse($this->hasCredentials($credentials));
+    }
+
+    public static function dataHasCredentials()
+    {
+        return [
+            'Case 01' => [false, true],
+            'Case 02' => [false, false],
+            'Case 03' => [true, false],
+        ];
+    }
+
+    #[Test]
+    public function assert_if_credentials_are_valid_or_invalid()
+    {
+        $this->app = $this->createUserProviderToCredentials();
+        $this->app->retrieveByCredentials = true;
+        $this->app->validateCredentials = true;
+        $credentials = [
+            'email' => 'john.doe@testing.com',
+            'password' => 'secret',
+        ];
+
+        $this->seeCredentials($credentials);
+
+        $this->app->retrieveByCredentials = false;
+        $this->dontSeeCredentials($credentials);
+    }
+
+    #[Test]
+    public function assert_if_user_is_authenticated()
+    {
+        $this->app = new class
+        {
+            public $userAuthenticated;
+
+            public function make()
+            {
+                return $this;
+            }
+
+            public function guard()
+            {
+                return $this;
+            }
+
+            public function user()
+            {
+                return $this->userAuthenticated;
+            }
+
+            public function getAuthIdentifier()
+            {
+                return true;
+            }
+        };
+        $user = new class
+        {
+            public function getAuthIdentifier()
+            {
+                return true;
+            }
+        };
+
+        $this->app->userAuthenticated = $user;
+
+        $this->seeIsAuthenticatedAs($user);
+    }
+
+    #[Test]
+    public function can_assert_if_someone_is_authenticated()
+    {
+        $this->app = new class
+        {
+            public $check;
+
+            public function make()
+            {
+                return $this;
+            }
+
+            public function guard()
+            {
+                return $this;
+            }
+
+            public function check()
+            {
+                return $this->check;
+            }
+        };
+
+        $this->app->check = true;
+        $this->assertTrue($this->isAuthenticated());
+
+        $this->app->check = false;
+        $this->assertFalse($this->isAuthenticated());
+    }
+
+    #[Test]
+    public function assert_if_someone_is_authenticated()
+    {
+        $this->app = new class
+        {
+            public $check;
+
+            public function make()
+            {
+                return $this;
+            }
+
+            public function guard()
+            {
+                return $this;
+            }
+
+            public function check()
+            {
+                return $this->check;
+            }
+        };
+
+        $this->app->check = true;
+        $this->seeIsAuthenticated();
+
+        $this->app->check = false;
+        $this->dontSeeIsAuthenticated();
+    }
+}
